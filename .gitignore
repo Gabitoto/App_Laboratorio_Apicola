@@ -172,3 +172,46 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Streamlit configuration and secrets
+.streamlit/
+.streamlit/secrets.toml
+.streamlit/config.toml
+
+# Database credentials and sensitive files
+*.env
+.env.local
+.env.production
+.env.development
+
+# Database backup files
+*.sql
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
