@@ -25,6 +25,7 @@ class Pool(BaseModel):
             'num_registro': num_registro,
             'observaciones': observaciones
         }
+        
         return self.insert(self.table_name, data)
     
     def update_pool(self, pool_id: int, **kwargs) -> bool:
@@ -88,4 +89,17 @@ class Pool(BaseModel):
                      a.nombres, a.apellidos
             ORDER BY p.fecha_analisis DESC
         """
-        return self.execute_custom_query(query, (fecha_inicio, fecha_fin)) or [] 
+        return self.execute_custom_query(query, (fecha_inicio, fecha_fin)) or []
+    
+    def get_pools_by_apicultor(self, apicultor_id: int) -> List[Dict[str, Any]]:
+        """Obtener pools de un apicultor específico"""
+        query = """
+            SELECT DISTINCT p.*, a.nombres as analista_nombres, a.apellidos as analista_apellidos
+            FROM pool p
+            LEFT JOIN analista a ON p.id_analista = a.id_analista
+            LEFT JOIN compone_pool cp ON p.id_pool = cp.id_pool
+            LEFT JOIN muestra_tambor mt ON cp.id_tambor = mt.id_tambor
+            WHERE mt.id_apicultor = %s
+            ORDER BY p.fecha_analisis DESC
+        """
+        return self.execute_custom_query(query, (apicultor_id,)) or [] 

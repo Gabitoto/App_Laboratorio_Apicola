@@ -49,6 +49,8 @@ class DatabaseConnection:
                 
                 if fetch:
                     result = cursor.fetchall()
+                    # Hacer commit para confirmar la transacción
+                    connection.commit()
                 else:
                     connection.commit()
                     result = cursor.rowcount

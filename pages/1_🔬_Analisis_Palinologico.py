@@ -7,7 +7,7 @@ from models.analisis_palinologico import AnalisisPalinologico
 from components.contador_especies import ContadorEspecies
 from components.pool_manager import PoolManager
 from utils.calculators import validar_analisis, calcular_estadisticas_analisis
-from utils.formatters import formatear_resumen_analisis, formatear_estadisticas
+from utils.formatters import formatear_resumen_analisis, formatear_estadisticas, formatear_fecha_simple
 
 # Configurar página
 st.set_page_config(
@@ -65,16 +65,16 @@ elif opcion == "Realizar Análisis":
     for pool in pools:
         # Obtener información del analista
         analista_nombre = "N/A"
-        if pool.get('analista_id'):
+        if pool.get('id_analista'):
             from models.analista import Analista
             analista_model = Analista()
-            analista = analista_model.get_analista_by_id(pool['analista_id'])
+            analista = analista_model.get_analista_by_id(pool['id_analista'])
             if analista:
-                analista_nombre = f"{analista['nombre']} {analista['apellido']}"
+                analista_nombre = f"{analista['nombres']} {analista['apellidos']}"
         
-        opcion = f"Pool #{pool['id']} - {analista_nombre} - {pool['fecha_analisis']}"
+        opcion = f"Pool #{pool['id_pool']} - {analista_nombre} - {formatear_fecha_simple(pool['fecha_analisis'])}"
         opciones_pools.append(opcion)
-        pools_dict[opcion] = pool['id']
+        pools_dict[opcion] = pool['id_pool']
     
     # Selector de pool
     pool_seleccionado = st.selectbox(
@@ -91,7 +91,7 @@ elif opcion == "Realizar Análisis":
     # Mostrar información del pool seleccionado
     pool_info = pool_model.get_pool_with_details(pool_id)
     if pool_info:
-        st.info(f"**Pool seleccionado:** #{pool_info['id']} - Analista: {pool_info['analista_nombre']} {pool_info['analista_apellido']} - Fecha: {pool_info['fecha_analisis']}")
+        st.info(f"**Pool seleccionado:** #{pool_info['id_pool']} - Analista: {pool_info['analista_nombres']} {pool_info['analista_apellidos']} - Fecha: {formatear_fecha_simple(pool_info['fecha_analisis'])}")
     
     st.markdown("---")
     
@@ -211,7 +211,7 @@ elif opcion == "Ver Análisis Existentes":
     pools = pool_model.get_all_pools()
     
     for pool in pools:
-        analisis = analisis_model.get_analisis_completo(pool['id'])
+        analisis = analisis_model.get_analisis_completo(pool['id_pool'])
         if analisis:
             analisis_completos.append(analisis)
     
@@ -224,7 +224,7 @@ elif opcion == "Ver Análisis Existentes":
         for analisis in analisis_completos:
             pool_info = analisis['pool_info']
             
-            with st.expander(f"Pool #{pool_info['id']} - {pool_info['analista_nombre']} {pool_info['analista_apellido']} - {pool_info['fecha_analisis']}"):
+            with st.expander(f"Pool #{pool_info['id_pool']} - {pool_info['analista_nombres']} {pool_info['analista_apellidos']} - {formatear_fecha_simple(pool_info['fecha_analisis'])}"):
                 st.markdown(formatear_resumen_analisis(analisis))
                 
                 # Mostrar tabla de especies

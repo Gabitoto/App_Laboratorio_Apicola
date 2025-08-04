@@ -48,7 +48,7 @@ fecha_fin = st.sidebar.date_input(
 # Filtro por analista
 st.sidebar.subheader("👨‍🔬 Analista")
 analistas = analista_model.get_all_analistas()
-opciones_analistas = ["Todos los analistas"] + [f"{a['nombre']} {a['apellido']}" for a in analistas]
+opciones_analistas = ["Todos los analistas"] + [f"{a['nombres']} {a['apellidos']}" for a in analistas]
 analista_seleccionado = st.sidebar.selectbox(
     "Seleccionar analista:",
     options=opciones_analistas,
@@ -58,7 +58,7 @@ analista_seleccionado = st.sidebar.selectbox(
 # Filtro por pool
 st.sidebar.subheader("🛢️ Pool")
 pools = pool_model.get_all_pools()
-opciones_pools = ["Todos los pools"] + [f"Pool #{p['id']}" for p in pools]
+opciones_pools = ["Todos los pools"] + [f"Pool #{p['id_pool']}" for p in pools]
 pool_seleccionado = st.sidebar.selectbox(
     "Seleccionar pool:",
     options=opciones_pools,
@@ -93,16 +93,29 @@ if aplicar_filtros or 'filtros_aplicados' not in st.session_state:
     if analista_seleccionado != "Todos los analistas":
         analista_id = None
         for analista in analistas:
-            if f"{analista['nombre']} {analista['apellido']}" == analista_seleccionado:
-                analista_id = analista['id']
+            if f"{analista['nombres']} {analista['apellidos']}" == analista_seleccionado:
+                analista_id = analista['id_analista']
                 break
         
         if analista_id:
-            analisis_filtrados = [a for a in analisis_filtrados if a.get('analista_id') == analista_id]
+            analisis_filtrados = [a for a in analisis_filtrados if a.get('id_analista') == analista_id]
     
     if pool_seleccionado != "Todos los pools":
         pool_id = int(pool_seleccionado.split("#")[1])
-        analisis_filtrados = [a for a in analisis_filtrados if a.get('pool_id') == pool_id]
+        analisis_filtrados = [a for a in analisis_filtrados if a.get('id_pool') == pool_id]
+    
+    if apicultor_seleccionado != "Todos los apicultores":
+        apicultor_id = None
+        for apicultor in apicultores:
+            if f"{apicultor['nombre']} {apicultor['apellido']}" == apicultor_seleccionado:
+                apicultor_id = apicultor['id_apicultor']
+                break
+        
+        if apicultor_id:
+            # Filtrar por apicultor (necesitamos obtener los pools del apicultor)
+            pools_apicultor = pool_model.get_pools_by_apicultor(apicultor_id)
+            pool_ids = [p['id_pool'] for p in pools_apicultor]
+            analisis_filtrados = [a for a in analisis_filtrados if a.get('id_pool') in pool_ids]
     
     # Mostrar resultados
     st.header("📈 Resultados del Reporte")
@@ -113,8 +126,8 @@ if aplicar_filtros or 'filtros_aplicados' not in st.session_state:
         # Métricas generales
         st.subheader("📊 Métricas Generales")
         
-        total_analisis = len(set(a['pool_id'] for a in analisis_filtrados))
-        total_especies = len(set(a['especie_id'] for a in analisis_filtrados))
+        total_analisis = len(set(a['id_pool'] for a in analisis_filtrados))
+        total_especies = len(set(a['id_especie'] for a in analisis_filtrados))
         total_granos = sum(a.get('cantidad_granos', 0) for a in analisis_filtrados)
         
         col1, col2, col3, col4 = st.columns(4)
@@ -144,9 +157,9 @@ if aplicar_filtros or 'filtros_aplicados' not in st.session_state:
         df_data = []
         for analisis in analisis_filtrados:
             df_data.append({
-                'Pool ID': analisis.get('pool_id'),
+                'Pool ID': analisis.get('id_pool'),
                 'Fecha': formatear_fecha(analisis.get('fecha_analisis', '')),
-                'Analista': f"{analisis.get('analista_nombre', '')} {analisis.get('analista_apellido', '')}",
+                'Analista': f"{analisis.get('analista_nombres', '')} {analisis.get('analista_apellidos', '')}",
                 'Especie': f"{analisis.get('nombre_comun', '')} ({analisis.get('nombre_cientifico', '')})",
                 'Granos': analisis.get('cantidad_granos', 0),
                 'Porcentaje': f"{analisis.get('porcentaje', 0):.2f}%"
@@ -228,10 +241,10 @@ if aplicar_filtros or 'filtros_aplicados' not in st.session_state:
         st.subheader("🔍 Análisis Detallado por Pool")
         
         # Obtener pools únicos
-        pools_unicos = list(set(a['pool_id'] for a in analisis_filtrados))
+        pools_unicos = list(set(a['id_pool'] for a in analisis_filtrados))
         
         for pool_id in pools_unicos:
-            analisis_pool = [a for a in analisis_filtrados if a['pool_id'] == pool_id]
+            analisis_pool = [a for a in analisis_filtrados if a['id_pool'] == pool_id]
             
             if analisis_pool:
                 # Obtener información del pool
@@ -239,7 +252,7 @@ if aplicar_filtros or 'filtros_aplicados' not in st.session_state:
                 
                 with st.expander(f"Pool #{pool_id} - {analisis_pool[0].get('fecha_analisis', '')}"):
                     if pool_info:
-                        st.markdown(f"**Analista:** {pool_info['analista_nombre']} {pool_info['analista_apellido']}")
+                        st.markdown(f"**Analista:** {pool_info['analista_nombres']} {pool_info['analista_apellidos']}")
                         st.markdown(f"**Fecha:** {formatear_fecha(pool_info['fecha_analisis'])}")
                         st.markdown(f"**Total de Tambores:** {pool_info['total_tambores']}")
                     

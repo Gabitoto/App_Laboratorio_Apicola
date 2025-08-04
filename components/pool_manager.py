@@ -4,6 +4,7 @@ from models.analista import Analista
 from models.muestra_tambor import MuestraTambor
 from models.pool import Pool
 from datetime import datetime
+from utils.formatters import formatear_fecha_simple
 
 class PoolManager:
     """Componente para gestionar la creación de pools"""
@@ -134,7 +135,7 @@ class PoolManager:
                 st.metric("Analista", f"{pool_info['analista_nombres']} {pool_info['analista_apellidos']}")
             
             with col2:
-                st.metric("Fecha de Análisis", pool_info['fecha_analisis'])
+                st.metric("Fecha de Análisis", formatear_fecha_simple(pool_info['fecha_analisis']))
                 st.metric("Tambores", len(tambores))
             
             if observaciones := pool_info.get('observaciones'):

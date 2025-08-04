@@ -2,23 +2,64 @@ from datetime import datetime
 from typing import List, Dict, Any
 import pandas as pd
 
-def formatear_fecha(fecha: str, formato_entrada: str = "%Y-%m-%d", formato_salida: str = "%d/%m/%Y") -> str:
+def formatear_fecha(fecha, formato_entrada: str = "%Y-%m-%d", formato_salida: str = "%d/%m/%Y") -> str:
     """
     Formatear fecha de un formato a otro
     
     Args:
-        fecha: Fecha como string
-        formato_entrada: Formato de entrada
+        fecha: Fecha como string, datetime.date, o datetime.datetime
+        formato_entrada: Formato de entrada (solo para strings)
         formato_salida: Formato de salida
     
     Returns:
         Fecha formateada
     """
     try:
-        fecha_obj = datetime.strptime(fecha, formato_entrada)
-        return fecha_obj.strftime(formato_salida)
+        # Si es un objeto datetime.date o datetime.datetime
+        if hasattr(fecha, 'strftime'):
+            return fecha.strftime(formato_salida)
+        
+        # Si es un string
+        if isinstance(fecha, str):
+            fecha_obj = datetime.strptime(fecha, formato_entrada)
+            return fecha_obj.strftime(formato_salida)
+        
+        # Si es None o vacío
+        if not fecha:
+            return ""
+        
+        # Para cualquier otro tipo, intentar convertirlo a string
+        return str(fecha)
     except:
-        return fecha
+        return str(fecha) if fecha else ""
+
+def formatear_fecha_simple(fecha) -> str:
+    """
+    Formatear fecha de manera simple para componentes de Streamlit
+    
+    Args:
+        fecha: Fecha como string, datetime.date, o datetime.datetime
+    
+    Returns:
+        Fecha como string en formato YYYY-MM-DD
+    """
+    try:
+        # Si es un objeto datetime.date o datetime.datetime
+        if hasattr(fecha, 'strftime'):
+            return fecha.strftime("%Y-%m-%d")
+        
+        # Si es un string, retornarlo tal como está
+        if isinstance(fecha, str):
+            return fecha
+        
+        # Si es None o vacío
+        if not fecha:
+            return ""
+        
+        # Para cualquier otro tipo, intentar convertirlo a string
+        return str(fecha)
+    except:
+        return str(fecha) if fecha else ""
 
 def formatear_nombre_completo(nombre: str, apellido: str) -> str:
     """

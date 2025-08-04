@@ -21,7 +21,7 @@ class ContadorEspecies:
         Returns:
             Datos actualizados de la especie
         """
-        especie_id = especie.get('id')
+        especie_id = especie.get('id_especie')
         nombre_comun = especie.get('nombre_comun', '')
         nombre_cientifico = especie.get('nombre_cientifico', '')
         

@@ -20,14 +20,28 @@ class BaseModel:
         result = self.db.execute_query(query, (id_value,))
         return result[0] if result else None
     
-    def insert(self, table_name: str, data: Dict[str, Any]) -> Optional[int]:
+    def insert(self, table_name: str, data: Dict[str, Any], id_field: str = None) -> Optional[int]:
         """Insertar un nuevo registro"""
         columns = ', '.join(data.keys())
         placeholders = ', '.join(['%s'] * len(data))
-        query = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders}) RETURNING id"
+        
+        # Determinar el nombre del campo ID
+        if id_field is None:
+            # Mapeo de nombres de tabla a campos ID
+            id_field_mapping = {
+                'pool': 'id_pool',
+                'analista': 'id_analista',
+                'apicultor': 'id_apicultor',
+                'especie': 'id_especie',
+                'muestra_tambor': 'id_tambor',
+                'analisis_palinologico': 'id_palinologico'
+            }
+            id_field = id_field_mapping.get(table_name, 'id')
+        
+        query = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders}) RETURNING {id_field}"
         
         result = self.db.execute_query(query, tuple(data.values()))
-        return result[0]['id'] if result else None
+        return result[0][id_field] if result else None
     
     def update(self, table_name: str, id_field: str, id_value: Any, data: Dict[str, Any]) -> bool:
         """Actualizar un registro existente"""
