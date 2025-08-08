@@ -80,9 +80,9 @@ def validar_analisis(especies_data: List[Dict[str, Any]]) -> Dict[str, Any]:
     errores = []
     advertencias = []
     
-    # Validar total mínimo de granos
+    # Validar total mínimo de granos (advertencia opcional)
     if total_granos < 100:
-        errores.append("El total de granos debe ser al menos 100")
+        advertencias.append("El total de granos es menor a 100. Para resultados más confiables, se recomienda contar al menos 100 granos.")
     
     # Validar que haya al menos una especie
     if len(especies_data) == 0:

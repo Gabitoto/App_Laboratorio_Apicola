@@ -100,33 +100,40 @@ def crear_dataframe_analisis(analisis_data: List[Dict[str, Any]]) -> pd.DataFram
     Returns:
         DataFrame formateado
     """
-    if not analisis_data:
+    try:
+        if not analisis_data:
+            return pd.DataFrame()
+        
+        df = pd.DataFrame(analisis_data)
+        
+        # Formatear columnas de manera segura
+        if 'nombre_comun' in df.columns and 'nombre_cientifico' in df.columns:
+            df['Especie'] = df.apply(lambda x: formatear_especie(
+                x.get('nombre_comun', ''), 
+                x.get('nombre_cientifico', '')
+            ), axis=1)
+        
+        if 'cantidad_granos' in df.columns:
+            df['Granos'] = df['cantidad_granos'].apply(lambda x: f"{x:,}".replace(",", ".") if x is not None else "0")
+        
+        if 'porcentaje' in df.columns:
+            df['Porcentaje'] = df['porcentaje'].apply(lambda x: f"{x:.2f}%" if x is not None else "0.00%")
+        
+        # Seleccionar columnas para mostrar
+        columnas_mostrar = []
+        if 'Especie' in df.columns:
+            columnas_mostrar.append('Especie')
+        if 'Granos' in df.columns:
+            columnas_mostrar.append('Granos')
+        if 'Porcentaje' in df.columns:
+            columnas_mostrar.append('Porcentaje')
+        if 'marca_especial' in df.columns:
+            columnas_mostrar.append('marca_especial')
+        
+        return df[columnas_mostrar] if columnas_mostrar else df
+    except Exception as e:
+        # En caso de error, retornar un DataFrame vacío
         return pd.DataFrame()
-    
-    df = pd.DataFrame(analisis_data)
-    
-    # Formatear columnas
-    if 'nombre_comun' in df.columns and 'nombre_cientifico' in df.columns:
-        df['Especie'] = df.apply(lambda x: formatear_especie(x['nombre_comun'], x['nombre_cientifico']), axis=1)
-    
-    if 'cantidad_granos' in df.columns:
-        df['Granos'] = df['cantidad_granos'].apply(lambda x: f"{x:,}".replace(",", "."))
-    
-    if 'porcentaje' in df.columns:
-        df['Porcentaje'] = df['porcentaje'].apply(lambda x: f"{x:.2f}%")
-    
-    # Seleccionar columnas para mostrar
-    columnas_mostrar = []
-    if 'Especie' in df.columns:
-        columnas_mostrar.append('Especie')
-    if 'Granos' in df.columns:
-        columnas_mostrar.append('Granos')
-    if 'Porcentaje' in df.columns:
-        columnas_mostrar.append('Porcentaje')
-    if 'marca_especial' in df.columns:
-        columnas_mostrar.append('marca_especial')
-    
-    return df[columnas_mostrar] if columnas_mostrar else df
 
 def crear_dataframe_tambores(tambores_data: List[Dict[str, Any]]) -> pd.DataFrame:
     """
@@ -171,33 +178,43 @@ def formatear_resumen_analisis(analisis_completo: Dict[str, Any]) -> str:
     Returns:
         Resumen formateado
     """
-    if not analisis_completo:
-        return "No hay datos de análisis"
-    
-    pool_info = analisis_completo.get('pool_info', {})
-    analisis_especies = analisis_completo.get('analisis_especies', [])
-    tambores = analisis_completo.get('tambores', [])
-    
-    resumen = f"""
+    try:
+        if not analisis_completo:
+            return "No hay datos de análisis"
+        
+        pool_info = analisis_completo.get('pool_info', {})
+        analisis_especies = analisis_completo.get('analisis_especies', [])
+        tambores = analisis_completo.get('tambores', [])
+        
+        # Calcular total de granos de manera segura
+        total_granos = sum(esp.get('cantidad_granos', 0) for esp in analisis_especies if esp)
+        
+        resumen = f"""
 **Análisis Palinológico - Pool #{pool_info.get('id_pool', 'N/A')}**
 
 **Información del Pool:**
 - **Analista:** {formatear_nombre_completo(pool_info.get('analista_nombres', ''), pool_info.get('analista_apellidos', ''))}
 - **Fecha de Análisis:** {formatear_fecha(pool_info.get('fecha_analisis', ''))}
 - **Total de Especies:** {len(analisis_especies)}
-- **Total de Granos:** {sum(esp.get('cantidad_granos', 0) for esp in analisis_especies):,}
+- **Total de Granos:** {total_granos:,}
 - **Tambores Analizados:** {len(tambores)}
 
 **Especies Identificadas:**
 """
-    
-    for i, especie in enumerate(analisis_especies[:5], 1):  # Mostrar solo las 5 primeras
-        resumen += f"{i}. {especie.get('nombre_comun', 'N/A')} - {especie.get('cantidad_granos', 0)} granos\n"
-    
-    if len(analisis_especies) > 5:
-        resumen += f"... y {len(analisis_especies) - 5} especies más\n"
-    
-    return resumen
+        
+        # Mostrar especies de manera segura
+        especies_validas = [esp for esp in analisis_especies if esp]
+        for i, especie in enumerate(especies_validas[:5], 1):  # Mostrar solo las 5 primeras
+            nombre = especie.get('nombre_comun', 'N/A')
+            granos = especie.get('cantidad_granos', 0)
+            resumen += f"{i}. {nombre} - {granos} granos\n"
+        
+        if len(especies_validas) > 5:
+            resumen += f"... y {len(especies_validas) - 5} especies más\n"
+        
+        return resumen
+    except Exception as e:
+        return f"Error al formatear resumen: {str(e)}"
 
 def formatear_estadisticas(estadisticas: Dict[str, Any]) -> str:
     """
@@ -209,10 +226,11 @@ def formatear_estadisticas(estadisticas: Dict[str, Any]) -> str:
     Returns:
         Estadísticas formateadas
     """
-    if not estadisticas:
-        return "No hay estadísticas disponibles"
-    
-    texto = f"""
+    try:
+        if not estadisticas:
+            return "No hay estadísticas disponibles"
+        
+        texto = f"""
 **Estadísticas del Análisis:**
 
 - **Total de Granos:** {estadisticas.get('total_granos', 0):,}
@@ -226,9 +244,14 @@ def formatear_estadisticas(estadisticas: Dict[str, Any]) -> str:
 
 **Especies Importantes (>10%):**
 """
-    
-    especies_importantes = estadisticas.get('especies_importantes', [])
-    for especie in especies_importantes:
-        texto += f"- {especie.get('nombre_comun', 'N/A')}: {especie.get('cantidad_granos', 0)} granos\n"
-    
-    return texto 
+        
+        especies_importantes = estadisticas.get('especies_importantes', [])
+        for especie in especies_importantes:
+            if especie:  # Verificar que la especie no sea None
+                nombre = especie.get('nombre_comun', 'N/A')
+                granos = especie.get('cantidad_granos', 0)
+                texto += f"- {nombre}: {granos} granos\n"
+        
+        return texto
+    except Exception as e:
+        return f"Error al formatear estadísticas: {str(e)}" 

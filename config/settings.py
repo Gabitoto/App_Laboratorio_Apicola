@@ -32,5 +32,5 @@ REPORT_CONFIG = {
 VALIDATION_CONFIG = {
     'max_especies_per_analisis': 50,
     'max_granos_per_especie': 10000,
-    'min_granos_total': 100,
+    'min_granos_recomendado': 100,  # Ya no es obligatorio, solo recomendado
 } 

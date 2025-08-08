@@ -32,7 +32,7 @@ class BaseModel:
                 'pool': 'id_pool',
                 'analista': 'id_analista',
                 'apicultor': 'id_apicultor',
-                'especie': 'id_especie',
+                'especies': 'id_especie',
                 'muestra_tambor': 'id_tambor',
                 'analisis_palinologico': 'id_palinologico'
             }

@@ -13,8 +13,13 @@ from utils.formatters import formatear_resumen_analisis, formatear_estadisticas,
 st.set_page_config(
     page_title="Análisis Palinológico - Laboratorio Apícola",
     page_icon="🔬",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
+
+# Configurar manejo de errores
+if 'error_count' not in st.session_state:
+    st.session_state.error_count = 0
 
 # Título de la página
 st.title("🔬 Análisis Palinológico")
@@ -51,11 +56,15 @@ elif opcion == "Realizar Análisis":
     # Paso 1: Seleccionar pool
     st.subheader("📋 Paso 1: Seleccionar Pool")
     
-    # Obtener pools disponibles
-    pools = pool_model.get_all_pools()
-    
-    if not pools:
-        st.error("No hay pools disponibles. Por favor, cree un pool primero.")
+    # Obtener pools disponibles con manejo de errores
+    try:
+        pools = pool_model.get_all_pools()
+        
+        if not pools:
+            st.error("No hay pools disponibles. Por favor, cree un pool primero.")
+            st.stop()
+    except Exception as e:
+        st.error(f"Error al cargar pools: {str(e)}")
         st.stop()
     
     # Crear opciones para el selector
@@ -98,11 +107,15 @@ elif opcion == "Realizar Análisis":
     # Paso 2: Seleccionar especies
     st.subheader("🌿 Paso 2: Seleccionar Especies")
     
-    # Obtener especies disponibles
-    especies = especie_model.get_all_especies()
-    
-    if not especies:
-        st.error("No hay especies disponibles. Por favor, agregue especies primero.")
+    # Obtener especies disponibles con manejo de errores
+    try:
+        especies = especie_model.get_all_especies()
+        
+        if not especies:
+            st.error("No hay especies disponibles. Por favor, agregue especies primero.")
+            st.stop()
+    except Exception as e:
+        st.error(f"Error al cargar especies: {str(e)}")
         st.stop()
     
     # Crear opciones para el multiselector
@@ -206,14 +219,31 @@ elif opcion == "Realizar Análisis":
 elif opcion == "Ver Análisis Existentes":
     st.header("📋 Análisis Existentes")
     
-    # Obtener todos los análisis
-    analisis_completos = []
-    pools = pool_model.get_all_pools()
+    # Usar st.cache_data para evitar recargas innecesarias
+    @st.cache_data(ttl=300)  # Cache por 5 minutos
+    def cargar_analisis_existentes():
+        try:
+            analisis_completos = []
+            pools = pool_model.get_all_pools()
+            
+            for pool in pools:
+                try:
+                    analisis = analisis_model.get_analisis_completo(pool['id_pool'])
+                    if analisis:
+                        analisis_completos.append(analisis)
+                except Exception as e:
+                    st.session_state.error_count += 1
+                    if st.session_state.error_count <= 3:  # Limitar mensajes de error
+                        st.warning(f"Error al cargar análisis del pool {pool['id_pool']}: {str(e)}")
+                    continue
+            
+            return analisis_completos
+        except Exception as e:
+            st.error(f"Error al cargar análisis existentes: {str(e)}")
+            return []
     
-    for pool in pools:
-        analisis = analisis_model.get_analisis_completo(pool['id_pool'])
-        if analisis:
-            analisis_completos.append(analisis)
+    # Cargar análisis con cache
+    analisis_completos = cargar_analisis_existentes()
     
     if not analisis_completos:
         st.info("No hay análisis realizados aún.")
@@ -221,23 +251,49 @@ elif opcion == "Ver Análisis Existentes":
         # Mostrar lista de análisis
         st.subheader("📊 Lista de Análisis Realizados")
         
-        for analisis in analisis_completos:
-            pool_info = analisis['pool_info']
-            
-            with st.expander(f"Pool #{pool_info['id_pool']} - {pool_info['analista_nombres']} {pool_info['analista_apellidos']} - {formatear_fecha_simple(pool_info['fecha_analisis'])}"):
-                st.markdown(formatear_resumen_analisis(analisis))
-                
-                # Mostrar tabla de especies
-                if analisis['analisis_especies']:
-                    import pandas as pd
-                    from utils.formatters import crear_dataframe_analisis
+        # Usar st.container para mejor rendimiento
+        with st.container():
+            for i, analisis in enumerate(analisis_completos):
+                try:
+                    pool_info = analisis.get('pool_info', {})
                     
-                    df_analisis = crear_dataframe_analisis(analisis['analisis_especies'])
-                    st.dataframe(df_analisis, use_container_width=True, hide_index=True)
+                    # Crear título del expander de manera segura
+                    titulo = f"Pool #{pool_info.get('id_pool', 'N/A')}"
+                    if pool_info.get('analista_nombres') and pool_info.get('analista_apellidos'):
+                        titulo += f" - {pool_info['analista_nombres']} {pool_info['analista_apellidos']}"
+                    if pool_info.get('fecha_analisis'):
+                        titulo += f" - {formatear_fecha_simple(pool_info['fecha_analisis'])}"
+                    
+                    with st.expander(titulo, expanded=False):
+                        # Usar st.empty para evitar re-renders
+                        resumen_container = st.empty()
+                        resumen_container.markdown(formatear_resumen_analisis(analisis))
+                        
+                        # Mostrar tabla de especies
+                        analisis_especies = analisis.get('analisis_especies', [])
+                        if analisis_especies:
+                            try:
+                                import pandas as pd
+                                from utils.formatters import crear_dataframe_analisis
+                                
+                                df_analisis = crear_dataframe_analisis(analisis_especies)
+                                if not df_analisis.empty:
+                                    st.dataframe(df_analisis, use_container_width=True, hide_index=True)
+                                else:
+                                    st.info("No hay datos de especies para mostrar en la tabla.")
+                            except Exception as e:
+                                st.warning(f"Error al crear tabla de especies: {str(e)}")
+                        
+                        # Mostrar estadísticas
+                        try:
+                            estadisticas = calcular_estadisticas_analisis(analisis_especies)
+                            st.markdown(formatear_estadisticas(estadisticas))
+                        except Exception as e:
+                            st.warning(f"Error al calcular estadísticas: {str(e)}")
                 
-                # Mostrar estadísticas
-                estadisticas = calcular_estadisticas_analisis(analisis['analisis_especies'])
-                st.markdown(formatear_estadisticas(estadisticas))
+                except Exception as e:
+                    st.error(f"Error al mostrar análisis {i+1}: {str(e)}")
+                    continue
 
 # Footer
 st.markdown("---")

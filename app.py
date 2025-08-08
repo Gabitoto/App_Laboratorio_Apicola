@@ -1,6 +1,18 @@
 import streamlit as st
+import sys
+import traceback
 from config.settings import APP_CONFIG
 from config.database import get_database_connection
+
+# Configurar manejo de errores global
+def handle_exception(exc_type, exc_value, exc_traceback):
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
+    st.error(f"Error no manejado: {exc_value}")
+    st.error(f"Traceback: {traceback.format_exception(exc_type, exc_value, exc_traceback)}")
+
+sys.excepthook = handle_exception
 
 # Configurar la aplicación
 st.set_page_config(
