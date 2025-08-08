@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import io
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 from models.analisis_palinologico import AnalisisPalinologico
@@ -89,6 +90,11 @@ if aplicar_filtros or 'filtros_aplicados' not in st.session_state:
     # Obtener análisis filtrados
     analisis_filtrados = analisis_model.get_analisis_by_date_range(fecha_inicio_str, fecha_fin_str)
     
+    # Debug: Mostrar información de los datos obtenidos
+    st.info(f"Análisis obtenidos por fecha: {len(analisis_filtrados)}")
+    if analisis_filtrados:
+        st.info(f"Primer análisis - Analista ID: {analisis_filtrados[0].get('analista_id')}, Nombre: {analisis_filtrados[0].get('analista_nombres')} {analisis_filtrados[0].get('analista_apellidos')}")
+    
     # Aplicar filtros adicionales
     if analista_seleccionado != "Todos los analistas":
         analista_id = None
@@ -98,7 +104,10 @@ if aplicar_filtros or 'filtros_aplicados' not in st.session_state:
                 break
         
         if analista_id:
-            analisis_filtrados = [a for a in analisis_filtrados if a.get('id_analista') == analista_id]
+            # Debug: Mostrar información del filtro
+            st.info(f"Filtrando por analista: {analista_seleccionado} (ID: {analista_id})")
+            analisis_filtrados = [a for a in analisis_filtrados if a.get('analista_id') == analista_id]
+            st.info(f"Análisis encontrados después del filtro: {len(analisis_filtrados)}")
     
     if pool_seleccionado != "Todos los pools":
         pool_id = int(pool_seleccionado.split("#")[1])
@@ -270,7 +279,7 @@ if aplicar_filtros or 'filtros_aplicados' not in st.session_state:
                         
                         if estadisticas['especie_dominante']:
                             especie_dom = estadisticas['especie_dominante']
-                            st.markdown(f"- Especie Dominante: {especie_dom.get('nombre_comun', 'N/A')} ({especie_dom.get('porcentaje', 0):.2f}%)")
+                            st.markdown(f"- Especie Dominante: {especie_dom.get('nombre_cientifico', 'N/A')} ({especie_dom.get('porcentaje', 0):.2f}%)")
         
         st.markdown("---")
         
@@ -280,47 +289,43 @@ if aplicar_filtros or 'filtros_aplicados' not in st.session_state:
         col1, col2 = st.columns(2)
         
         with col1:
-            if st.button("📊 Exportar a Excel", use_container_width=True):
-                # Crear DataFrame para exportar
-                df_export = pd.DataFrame(df_data)
-                
-                # Generar nombre de archivo
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                filename = f"reporte_palinologico_{timestamp}.xlsx"
-                
-                # Exportar
-                df_export.to_excel(filename, index=False)
-                
-                # Descargar archivo
-                with open(filename, "rb") as file:
-                    st.download_button(
-                        label="📥 Descargar Excel",
-                        data=file.read(),
-                        file_name=filename,
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        use_container_width=True
-                    )
+            # Crear DataFrame para exportar
+            df_export = pd.DataFrame(df_data)
+            
+            # Generar nombre de archivo para Excel
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            excel_filename = f"reporte_palinologico_{timestamp}.xlsx"
+            
+            # Exportar a Excel usando BytesIO
+            import io
+            buffer = io.BytesIO()
+            with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+                df_export.to_excel(writer, index=False, sheet_name='Reporte Palinológico')
+            
+            # Descargar archivo Excel
+            st.download_button(
+                label="📊 Descargar Excel",
+                data=buffer.getvalue(),
+                file_name=excel_filename,
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True
+            )
         
         with col2:
-            if st.button("📄 Exportar a CSV", use_container_width=True):
-                # Crear DataFrame para exportar
-                df_export = pd.DataFrame(df_data)
-                
-                # Generar nombre de archivo
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                filename = f"reporte_palinologico_{timestamp}.csv"
-                
-                # Exportar
-                csv_data = df_export.to_csv(index=False)
-                
-                # Descargar archivo
-                st.download_button(
-                    label="📥 Descargar CSV",
-                    data=csv_data,
-                    file_name=filename,
-                    mime="text/csv",
-                    use_container_width=True
-                )
+            # Generar nombre de archivo para CSV
+            csv_filename = f"reporte_palinologico_{timestamp}.csv"
+            
+            # Exportar a CSV
+            csv_data = df_export.to_csv(index=False, encoding='utf-8-sig')
+            
+            # Descargar archivo CSV
+            st.download_button(
+                label="📄 Descargar CSV",
+                data=csv_data,
+                file_name=csv_filename,
+                mime="text/csv",
+                use_container_width=True
+            )
 
 # Footer
 st.markdown("---")

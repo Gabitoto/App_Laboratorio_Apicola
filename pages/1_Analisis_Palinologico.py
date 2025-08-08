@@ -200,6 +200,9 @@ elif opcion == "Realizar Análisis":
                                 # Calcular y mostrar estadísticas
                                 estadisticas = calcular_estadisticas_analisis(analisis_completo['analisis_especies'])
                                 st.markdown(formatear_estadisticas(estadisticas))
+                            else:
+                                st.error("❌ No se pudo recuperar el análisis guardado")
+                                st.info("Verifique la consola para más detalles de debug")
                             
                             # Limpiar contadores
                             contador_component.limpiar_contadores()
@@ -218,6 +221,41 @@ elif opcion == "Realizar Análisis":
 
 elif opcion == "Ver Análisis Existentes":
     st.header("📋 Análisis Existentes")
+    
+    # Botón para verificar datos directamente en la BD
+    if st.button("🔍 Verificar Datos en Base de Datos"):
+        st.subheader("📊 Verificación Directa de Base de Datos")
+        
+        try:
+            # Verificar pools
+            pools = pool_model.get_all_pools()
+            st.write(f"**Pools encontrados:** {len(pools)}")
+            
+            # Verificar análisis palinológicos
+            from config.database import get_database_connection
+            db = get_database_connection()
+            
+            # Consulta directa para análisis
+            analisis_query = "SELECT COUNT(*) as total FROM analisis_palinologico"
+            analisis_count = db.execute_query(analisis_query)
+            st.write(f"**Análisis palinológicos en BD:** {analisis_count[0]['total'] if analisis_count else 0}")
+            
+            # Consulta directa para ver análisis por pool
+            analisis_por_pool_query = """
+                SELECT id_pool, COUNT(*) as total_analisis, SUM(cantidad_granos) as total_granos
+                FROM analisis_palinologico 
+                GROUP BY id_pool
+                ORDER BY id_pool
+            """
+            analisis_por_pool = db.execute_query(analisis_por_pool_query)
+            st.write("**Análisis por pool:**")
+            for analisis in analisis_por_pool:
+                st.write(f"- Pool {analisis['id_pool']}: {analisis['total_analisis']} análisis, {analisis['total_granos']} granos")
+                
+        except Exception as e:
+            st.error(f"Error en verificación: {str(e)}")
+    
+    st.markdown("---")
     
     # Usar st.cache_data para evitar recargas innecesarias
     @st.cache_data(ttl=300)  # Cache por 5 minutos
@@ -245,8 +283,21 @@ elif opcion == "Ver Análisis Existentes":
     # Cargar análisis con cache
     analisis_completos = cargar_analisis_existentes()
     
+    # Debug: Mostrar información de pools disponibles
+    try:
+        pools = pool_model.get_all_pools()
+        st.info(f"Pools disponibles en la base de datos: {len(pools)}")
+        for pool in pools:
+            st.write(f"- Pool #{pool['id_pool']} - Analista: {pool.get('id_analista', 'N/A')}")
+    except Exception as e:
+        st.warning(f"Error al obtener pools: {str(e)}")
+    
     if not analisis_completos:
         st.info("No hay análisis realizados aún.")
+        st.info("Esto puede deberse a:")
+        st.info("1. No se han guardado análisis aún")
+        st.info("2. Error en la recuperación de datos")
+        st.info("3. Problemas de conexión con la base de datos")
     else:
         # Mostrar lista de análisis
         st.subheader("📊 Lista de Análisis Realizados")

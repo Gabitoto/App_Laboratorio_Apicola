@@ -37,7 +37,7 @@ class AnalisisPalinologico(BaseModel):
         return self.delete(self.table_name, "id_palinologico", analisis_id)
     
     def get_analisis_by_pool(self, pool_id: int) -> List[Dict[str, Any]]:
-        """Obtener todos los análisis de un pool específico"""
+        """Obtener todos los análisis de un pool específico con porcentajes calculados"""
         query = """
             SELECT ap.*, e.nombre_comun, e.nombre_cientifico, e.familia
             FROM analisis_palinologico ap
@@ -45,10 +45,24 @@ class AnalisisPalinologico(BaseModel):
             WHERE ap.id_pool = %s
             ORDER BY ap.cantidad_granos DESC
         """
-        return self.execute_custom_query(query, (pool_id,)) or []
+        analisis_data = self.execute_custom_query(query, (pool_id,)) or []
+        
+        # Calcular porcentajes si hay datos
+        if analisis_data:
+            total_granos = sum(analisis['cantidad_granos'] for analisis in analisis_data)
+            for analisis in analisis_data:
+                if total_granos > 0:
+                    analisis['porcentaje'] = round((analisis['cantidad_granos'] / total_granos) * 100, 2)
+                else:
+                    analisis['porcentaje'] = 0.0
+        
+        return analisis_data
     
     def get_analisis_completo(self, pool_id: int) -> Dict[str, Any]:
         """Obtener análisis completo con detalles del pool y especies"""
+        # Debug: Imprimir pool_id que se está consultando
+        print(f"Consultando análisis completo para pool {pool_id}")
+        
         # Obtener información del pool
         pool_query = """
             SELECT p.*, a.nombres as analista_nombres, a.apellidos as analista_apellidos
@@ -58,11 +72,19 @@ class AnalisisPalinologico(BaseModel):
         """
         pool_info = self.execute_custom_query(pool_query, (pool_id,))
         
+        # Debug: Verificar información del pool
+        print(f"Información del pool: {pool_info}")
+        
         if not pool_info:
+            print(f"No se encontró información del pool {pool_id}")
             return None
         
         # Obtener análisis de especies
         analisis_especies = self.get_analisis_by_pool(pool_id)
+        
+        # Debug: Verificar análisis de especies
+        print(f"Análisis de especies encontrados: {len(analisis_especies)}")
+        print(f"Datos de análisis: {analisis_especies}")
         
         # Obtener tambores del pool
         tambores_query = """
@@ -75,19 +97,28 @@ class AnalisisPalinologico(BaseModel):
         """
         tambores = self.execute_custom_query(tambores_query, (pool_id,)) or []
         
-        return {
+        # Debug: Verificar tambores
+        print(f"Tambores encontrados: {len(tambores)}")
+        
+        resultado = {
             'pool_info': pool_info[0],
             'analisis_especies': analisis_especies,
             'tambores': tambores,
             'total_granos': sum(analisis['cantidad_granos'] for analisis in analisis_especies),
             'total_especies': len(analisis_especies)
         }
+        
+        # Debug: Verificar resultado final
+        print(f"Resultado final: {resultado}")
+        
+        return resultado
     
     def get_analisis_by_date_range(self, fecha_inicio: str, fecha_fin: str) -> List[Dict[str, Any]]:
         """Obtener análisis en un rango de fechas"""
         query = """
             SELECT ap.*, e.nombre_comun, e.nombre_cientifico, p.fecha_analisis,
-                   a.nombres as analista_nombres, a.apellidos as analista_apellidos
+                   a.nombres as analista_nombres, a.apellidos as analista_apellidos,
+                   p.id_analista, a.id_analista as analista_id
             FROM analisis_palinologico ap
             INNER JOIN especies e ON ap.id_especie = e.id_especie
             INNER JOIN pool p ON ap.id_pool = p.id_pool
@@ -125,6 +156,10 @@ class AnalisisPalinologico(BaseModel):
     def save_analisis_completo(self, pool_id: int, especies_data: List[Dict[str, Any]]) -> bool:
         """Guardar análisis completo para un pool"""
         try:
+            # Debug: Imprimir datos que se van a guardar
+            print(f"Guardando análisis para pool {pool_id}")
+            print(f"Datos a guardar: {especies_data}")
+            
             # Preparar datos para inserción
             insert_data = []
             for especie in especies_data:
@@ -135,6 +170,9 @@ class AnalisisPalinologico(BaseModel):
                     especie.get('marca_especial')
                 ))
             
+            # Debug: Imprimir datos preparados
+            print(f"Datos preparados para inserción: {insert_data}")
+            
             # Insertar todos los análisis
             query = """
                 INSERT INTO analisis_palinologico 
@@ -142,6 +180,10 @@ class AnalisisPalinologico(BaseModel):
                 VALUES (%s, %s, %s, %s)
             """
             result = self.execute_many(query, insert_data)
+            
+            # Debug: Verificar resultado
+            print(f"Resultado de inserción: {result}")
+            
             return result is not None and result > 0
             
         except Exception as e:
