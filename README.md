@@ -4,9 +4,9 @@
 
 Sistema web desarrollado con **Streamlit** y **Python** para la gestión de análisis palinológicos en un laboratorio apícola. Permite cargar análisis de polen de miel, visualizar resultados en reportes con porcentajes, y gestionar toda la información relacionada con apicultores, analistas, especies y tambores.
 
-## ✨ Características Principales
+## Características Principales
 
-### 🔬 **Análisis Palinológico**
+###  **Análisis Palinológico**
 - ✅ Creación de pools de tambores para análisis
 - ✅ Selector dinámico de analistas y tambores
 - ✅ Contadores interactivos para granos de polen por especie
@@ -14,7 +14,7 @@ Sistema web desarrollado con **Streamlit** y **Python** para la gestión de aná
 - ✅ Validación en tiempo real de datos
 - ✅ Marcas especiales por especie
 
-### 📊 **Reportes y Visualizaciones**
+### **Reportes y Visualizaciones**
 - ✅ Filtros avanzados por fecha, analista, pool y apicultor
 - ✅ Gráficos de pastel para distribución de especies
 - ✅ Gráficos de barras para especies más frecuentes
@@ -22,14 +22,14 @@ Sistema web desarrollado con **Streamlit** y **Python** para la gestión de aná
 - ✅ Exportación a Excel y CSV
 - ✅ Estadísticas detalladas y métricas
 
-### ⚙️ **Administración**
+###  **Administración**
 - ✅ Gestión completa de apicultores
 - ✅ Gestión de analistas
 - ✅ Catálogo de especies vegetales
 - ✅ Gestión de tambores de miel
 - ✅ Interfaz intuitiva con formularios
 
-## 🛠️ Tecnologías Utilizadas
+##  Tecnologías Utilizadas
 
 - **Backend:** Python 3.9+
 - **Frontend:** Streamlit
@@ -39,7 +39,7 @@ Sistema web desarrollado con **Streamlit** y **Python** para la gestión de aná
 - **Manipulación de Datos:** pandas
 - **Exportación:** OpenPyXL, pandas
 
-## 📦 Instalación
+##  Instalación
 
 ### 1. **Requisitos Previos**
 - Python 3.9 o superior
@@ -86,11 +86,11 @@ Editar el archivo `.streamlit/secrets.toml`:
 DB_HOST = "localhost"
 DB_PORT = "5432"
 DB_NAME = "laboratorio_apicola"
-DB_USER = "postgres"
+DB_USER = "tu_usuario_aqui"
 DB_PASSWORD = "tu_password_aqui"
 ```
 
-## 🚀 Ejecución
+##  Ejecución
 
 ### **Iniciar la Aplicación**
 ```bash
@@ -99,7 +99,7 @@ streamlit run app.py
 
 La aplicación se abrirá automáticamente en tu navegador en `http://localhost:8501`
 
-## 📊 Estructura de la Base de Datos
+##  Estructura de la Base de Datos
 
 ### **Tablas Principales**
 
@@ -146,7 +146,7 @@ La aplicación se abrirá automáticamente en tu navegador en `http://localhost:
 - `fecha_asociacion` (DATE)
 - PRIMARY KEY (id_tambor, id_pool)
 
-## 📁 Estructura del Proyecto
+##  Estructura del Proyecto
 
 ```
 App_Laboratorio_Apicola/
@@ -166,9 +166,9 @@ App_Laboratorio_Apicola/
 │   └── analisis_palinologico.py             # Modelo Análisis
 ├── pages/                                    # Páginas de la aplicación
 │   ├── __init__.py
-│   ├── 1_🔬_Analisis_Palinologico.py        # Análisis
-│   ├── 2_📊_Reportes_Palinologicos.py       # Reportes
-│   └── 3_⚙️_Administracion.py               # Administración
+│   ├── 1_Analisis_Palinologico.py        # Análisis
+│   ├── 2_Reportes_Palinologicos.py       # Reportes
+│   └── 3_Administracion.py               # Administración
 ├── components/                               # Componentes reutilizables
 │   ├── __init__.py
 │   ├── contador_especies.py                # Contadores
@@ -209,7 +209,7 @@ App_Laboratorio_Apicola/
 3. Visualizar gráficos y estadísticas
 4. Exportar datos si es necesario
 
-## 🔧 Configuración Avanzada
+##  Configuración Avanzada
 
 ### **Variables de Entorno**
 El sistema utiliza las siguientes variables de entorno (configuradas en `.streamlit/secrets.toml`):
@@ -228,7 +228,7 @@ Las configuraciones se encuentran en `config/settings.py`:
 - Configuraciones de reportes
 - Configuraciones de validación
 
-## 🐛 Solución de Problemas
+##  Solución de Problemas
 
 ### **Error de Conexión a Base de Datos**
 1. Verificar que PostgreSQL esté ejecutándose
@@ -245,7 +245,7 @@ Las configuraciones se encuentran en `config/settings.py`:
 1. Verificar permisos de usuario en PostgreSQL
 2. Confirmar que el usuario puede crear/editar tablas
 
-## 📈 Funcionalidades Futuras
+##  Funcionalidades Futuras
 
 - [ ] Exportación a PDF con ReportLab
 - [ ] Gráficos 3D para visualización avanzada
@@ -256,7 +256,7 @@ Las configuraciones se encuentran en `config/settings.py`:
 - [ ] Backup automático de datos
 - [ ] Análisis estadísticos avanzados
 
-## 🤝 Contribución
+##  Contribución
 
 1. Fork el proyecto
 2. Crear una rama para tu feature (`git checkout -b feature/AmazingFeature`)
@@ -264,11 +264,11 @@ Las configuraciones se encuentran en `config/settings.py`:
 4. Push a la rama (`git push origin feature/AmazingFeature`)
 5. Abrir un Pull Request
 
-## 📄 Licencia
+##  Licencia
 
 Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
 
-## 📞 Soporte
+##  Soporte
 
 Para soporte técnico o consultas:
 - Revisar la documentación
