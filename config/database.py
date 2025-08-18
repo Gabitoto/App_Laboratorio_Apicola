@@ -21,7 +21,8 @@ class DatabaseConnection:
                 port=DATABASE_CONFIG['port'],
                 database=DATABASE_CONFIG['database'],
                 user=DATABASE_CONFIG['user'],
-                password=DATABASE_CONFIG['password']
+                password=DATABASE_CONFIG['password'],
+                sslmode=DATABASE_CONFIG.get('sslmode', 'prefer')
             )
         except Exception as e:
             st.error(f"Error al conectar con la base de datos: {str(e)}")
