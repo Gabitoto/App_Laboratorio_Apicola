@@ -202,7 +202,7 @@ if aplicar_filtros or 'filtros_aplicados' not in st.session_state:
                 fig_pie.update_traces(textposition='inside', textinfo='percent+label')
                 st.plotly_chart(fig_pie, use_container_width=True)
         
-        # Gráfico 2: Análisis por fecha
+        # Gráfico 2: Análisis por fecha MEJORAR EL GRAFICO PARA QUE SE MUESTRE EN X FECHAS  EN Y ESPECIES Y EN EL CENTRO PUNTOS O SEGMENTOS DE CANTIDADES DE GRANOS
         if analisis_filtrados:
             # Agrupar por fecha
             fechas_data = {}
@@ -221,7 +221,7 @@ if aplicar_filtros or 'filtros_aplicados' not in st.session_state:
                 )
                 st.plotly_chart(fig_line, use_container_width=True)
         
-        # Gráfico 3: Top 10 especies
+        # Gráfico 3: Top 10 especies TENEMOS QUE CAMBIARLO PARA QUE SEA UN GRAFICO DE BARRAS APILADAS
         if analisis_filtrados:
             # Agrupar por especie y calcular totales
             especies_totales = {}
